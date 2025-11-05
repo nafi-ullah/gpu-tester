@@ -1,20 +1,20 @@
-# Use official PyTorch image with CUDA support
-FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
+# Use NVIDIA’s official PyTorch CUDA image
+FROM nvcr.io/nvidia/pytorch:23.10-py3
 
-# Set working directory
 WORKDIR /app
 
-# Copy requirements.txt
 COPY requirements.txt .
-
-# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the FastAPI app
 COPY gpu_test_app.py .
 
-# Expose port
+# Automatically verify GPU availability at container startup
+RUN python -c "import torch; assert torch.cuda.is_available(), 'GPU not accessible!'"
+
 EXPOSE 8000
 
-# Start the FastAPI app using Uvicorn
+# Set NVIDIA runtime environment automatically
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
 CMD ["uvicorn", "gpu_test_app:app", "--host", "0.0.0.0", "--port", "8000"]
